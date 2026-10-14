@@ -2,13 +2,13 @@ from __future__ import annotations
 
 import json
 import os
-import sys
 from pathlib import Path
 
 import pytest
 
 from hooks import ship_readiness as sr
 from hooks.lib import config as config_mod
+from hooks.lib import testmap
 from tests.gates.conftest import git, make_executable, schema
 
 
@@ -275,7 +275,8 @@ def test_mutation_never_passes_when_it_cannot_run(ws):
     assert nothing.status == "NOT_APPLICABLE"
     write(ws, "src/calc.py", "def add(a, b):\n    return a + b + 0\n")
     check = sr.mutation(str(ws), "HEAD", 0.6, cfg_for(ws))
-    if sys.version_info < (3, 10):
+    version = sr._python_version(testmap.workspace_python(str(ws)))
+    if version is not None and version < (3, 10):
         assert check.status == "UNVERIFIED" and "needs Python 3.10" in check.detail
     else:
         assert check.status in ("UNVERIFIED", "PASS", "FAIL")
