@@ -1,0 +1,10 @@
+.omega/
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+ui/keys.json
+ui/keyfile
+ui/ui_token
+.scratch/
+.DS_Store

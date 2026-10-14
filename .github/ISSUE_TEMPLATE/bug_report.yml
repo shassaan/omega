@@ -1,0 +1,43 @@
+name: Bug report
+description: Something Omega did wrong (but not a guard bypass; report those privately, see SECURITY.md)
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Found a way to get a guard to allow something it should deny?** Don't file it here.
+        Use [private vulnerability reporting](https://github.com/shassaan/omega/security/advisories/new) instead.
+  - type: dropdown
+    id: runtime
+    attributes:
+      label: Agent runtime
+      options: [Claude Code, Codex CLI, Web dashboard (preview), Not runtime-specific]
+    validations:
+      required: true
+  - type: input
+    id: versions
+    attributes:
+      label: Versions
+      description: Omega commit, runtime version, Python version, OS
+      placeholder: "omega 3f2a1c0 · claude 2.3.1 · python 3.9.6 · macOS 26"
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: The tool call or command, what Omega did, and the exact message it printed.
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Reproduction
+      description: Minimal steps, or better, a failing test.

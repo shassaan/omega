@@ -1,0 +1,149 @@
+{
+ "schema": "omega/proof/1",
+ "omega_version": "0.1.0",
+ "ts": "2026-10-13T10:00:00Z",
+ "ts_ns": 1791885600000000000,
+ "session_id": "sess-claude-0001",
+ "provider": "claude",
+ "workspace": "/abs/ws",
+ "run_id": null,
+ "verified": true,
+ "released": false,
+ "overridden": false,
+ "attempt": 1,
+ "files": {
+  "src/auth/signup.py": "4dd9974620164d1456752305d638bc405ea80627b8a4667c7a60d1c28ae26feb",
+  "tests/test_signup.py": "c23cf6d7ab136666e1448427d12531b188ca007b6311ad38577c7a8705aa78d3",
+  "docs/contracts/user-signup.md": "d936658558c84575fff46a3b16d5fd7503cca5a146492d06a3848db45c5eee82",
+  "src/old.py": "<deleted>"
+ },
+ "files_digest": "c30f060a5b362efbb5dc8aba3afe313449e5bcc6278e4fc4878f07a5fe373ae8",
+ "results": [
+  {
+   "gate": "proof",
+   "check": "pytest",
+   "status": "PASS",
+   "required": true,
+   "detail": "12 passed",
+   "rc": 0,
+   "duration_ms": 1830,
+   "argv": [
+    "/abs/ws/.venv/bin/python",
+    "-m",
+    "pytest",
+    "-q",
+    "-x",
+    "-p",
+    "no:cacheprovider"
+   ],
+   "cwd": "/abs/ws",
+   "output_tail": "12 passed in 1.71s"
+  },
+  {
+   "gate": "proof",
+   "check": "ruff",
+   "status": "NOT_APPLICABLE",
+   "required": false,
+   "detail": "no changed files of this kind",
+   "rc": null,
+   "duration_ms": 0,
+   "argv": [],
+   "cwd": "/abs/ws",
+   "output_tail": ""
+  }
+ ],
+ "tdd": [
+  {
+   "source": "src/auth/signup.py",
+   "test": "tests/test_signup.py",
+   "test_sha256": "c23cf6d7ab136666e1448427d12531b188ca007b6311ad38577c7a8705aa78d3",
+   "red": {
+    "ts": "2026-10-13T09:51:00Z",
+    "ts_ns": 1791885000000000001,
+    "job_id": "test_tests_test_signup_py-1",
+    "rc": 1
+   },
+   "green": {
+    "ts": "2026-10-13T09:52:00Z",
+    "ts_ns": 1791885000000000002,
+    "job_id": "test_tests_test_signup_py-2",
+    "rc": 0
+   },
+   "status": "PASS",
+   "detail": ""
+  }
+ ],
+ "cost": {
+  "status": "PASS",
+  "session_usd": 1.23,
+  "run_usd": null,
+  "month_usd": 41.1,
+  "max_call_usd": 0.31,
+  "caps": {
+   "per_call_usd": 0.5,
+   "per_session_usd": 5.0,
+   "per_run_usd": 5.0,
+   "monthly_usd": 100.0
+  },
+  "breaches": [],
+  "warnings": [],
+  "unknown_models": []
+ },
+ "ship": {
+  "schema": "omega/ship/1",
+  "ts": "2026-10-13T10:00:00Z",
+  "workspace": "/abs/ws",
+  "mode": "fast",
+  "strict": false,
+  "status": "PASS",
+  "tiers": {
+   "infra": {
+    "status": "NOT_APPLICABLE",
+    "applicable": false,
+    "detected": [],
+    "checks": []
+   },
+   "database": {
+    "status": "PASS",
+    "applicable": true,
+    "detected": [
+     "alembic.ini"
+    ],
+    "checks": [
+     {
+      "id": "migration_rules",
+      "status": "PASS",
+      "argv": [],
+      "rc": null,
+      "duration_ms": 12,
+      "detail": "3 files, 0 high",
+      "hint": "",
+      "required": true
+     }
+    ]
+   },
+   "application": {
+    "status": "PASS",
+    "applicable": true,
+    "detected": [
+     "pyproject.toml"
+    ],
+    "checks": []
+   },
+   "analytics": {
+    "status": "NOT_APPLICABLE",
+    "applicable": false,
+    "detected": [],
+    "checks": []
+   },
+   "observability": {
+    "status": "NOT_APPLICABLE",
+    "applicable": false,
+    "detected": [],
+    "checks": []
+   }
+  }
+ },
+ "blocking": [],
+ "unparsed_mutations": []
+}

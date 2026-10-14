@@ -1,0 +1,96 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/shassaan/omega/schemas/contract.schema.json",
+  "title": "Harness contract clearance",
+  "description": "Written by bin/stop_orchestrator.py to <workspace>/.omega/clearances/contract.json. Machine-checked validity of every in-scope docs/contracts/<slug>.md (parse, seams, code/tests paths exist, coverage of touched source paths). Human sign-off is recorded separately in review.json. Bound to the sha256 of every touched file.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "omega_version", "ts", "ts_ns", "session_id", "provider", "workspace", "run_id", "verified", "released", "overridden", "attempt", "files", "files_digest", "nontrivial", "reason", "contracts", "uncovered_paths", "errors"],
+  "properties": {
+    "schema": {"const": "omega/contract/1"},
+    "omega_version": {"type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$"},
+    "ts": {"$ref": "#/$defs/isoTs"},
+    "ts_ns": {"$ref": "#/$defs/tsNs"},
+    "session_id": {"type": "string", "minLength": 1},
+    "provider": {"enum": ["claude", "codex"]},
+    "workspace": {"type": "string", "minLength": 1},
+    "run_id": {"type": ["string", "null"]},
+    "verified": {"type": "boolean"},
+    "released": {"type": "boolean"},
+    "overridden": {"type": "boolean"},
+    "attempt": {"type": "integer", "minimum": 0},
+    "files": {"$ref": "#/$defs/files"},
+    "files_digest": {"$ref": "#/$defs/sha256"},
+    "nontrivial": {"type": "boolean"},
+    "reason": {
+      "type": "string",
+      "description": "Why the change is or is not non-trivial, e.g. '3 source files touched; migrations touched'."
+    },
+    "contracts": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/contractEntry"}
+    },
+    "uncovered_paths": {
+      "type": "array",
+      "description": "Ledger source paths that no in-scope contract's code: line lists. Non-empty when nontrivial makes verified false.",
+      "items": {"$ref": "#/$defs/relPath"}
+    },
+    "errors": {
+      "type": "array",
+      "description": "Parser/validator errors across all in-scope contracts, each prefixed with the slug.",
+      "items": {"type": "string"}
+    }
+  },
+  "$defs": {
+    "isoTs": {"type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$"},
+    "tsNs": {"type": "integer", "minimum": 0},
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "fileHash": {"type": "string", "pattern": "^([0-9a-f]{64}|<deleted>|<dir>)$"},
+    "relPath": {"type": "string", "minLength": 1, "pattern": "^[^/].*$"},
+    "slug": {"type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"},
+    "files": {
+      "type": "object",
+      "propertyNames": {"$ref": "#/$defs/relPath"},
+      "additionalProperties": {"$ref": "#/$defs/fileHash"}
+    },
+    "validationCode": {"type": "string", "pattern": "^[EW]0\\d{2}: .+$"},
+    "seamCounts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["Unit", "Integration", "Functional", "Journey"],
+      "properties": {
+        "Unit": {"type": "integer", "minimum": 0},
+        "Integration": {"type": "integer", "minimum": 0},
+        "Functional": {"type": "integer", "minimum": 0},
+        "Journey": {"type": "integer", "minimum": 0}
+      }
+    },
+    "contractEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["slug", "path", "fingerprint", "valid", "errors", "warnings", "code", "tests", "seams", "not_applicable", "code_in_ledger", "touched_this_session"],
+      "properties": {
+        "slug": {"$ref": "#/$defs/slug"},
+        "path": {"$ref": "#/$defs/relPath"},
+        "fingerprint": {
+          "type": "string",
+          "description": "sha256 of the contract's parsed structure (slug, code, tests, assumptions, seams/scenarios/steps), or <deleted>.",
+          "pattern": "^([0-9a-f]{64}|<deleted>)$"
+        },
+        "valid": {"type": "boolean"},
+        "errors": {"type": "array", "items": {"$ref": "#/$defs/validationCode"}},
+        "warnings": {"type": "array", "items": {"$ref": "#/$defs/validationCode"}},
+        "code": {"type": "array", "minItems": 0, "items": {"$ref": "#/$defs/relPath"}},
+        "tests": {"type": "array", "minItems": 0, "items": {"$ref": "#/$defs/relPath"}},
+        "seams": {"$ref": "#/$defs/seamCounts"},
+        "not_applicable": {
+          "type": "array",
+          "description": "Seams declared '_Not applicable: <reason>_' in the contract (never Unit).",
+          "items": {"enum": ["Integration", "Functional", "Journey"]}
+        },
+        "code_in_ledger": {"type": "array", "items": {"$ref": "#/$defs/relPath"}},
+        "touched_this_session": {"type": "boolean"}
+      }
+    }
+  }
+}

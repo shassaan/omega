@@ -1,0 +1,1 @@
+{"session_id": "sess-claude-0001", "transcript_path": null, "cwd": "/workspace", "permission_mode": "acceptEdits", "hook_event_name": "PreToolUse", "tool_name": "Bash", "tool_input": {"command": "git status", "description": "Show status"}, "tool_use_id": "toolu_01PRE000000000000000001"}

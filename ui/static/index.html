@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Omega Control</title>
+<link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">
+    <span class="mark" aria-hidden="true"></span>
+    <span class="name">omega</span>
+    <span class="version" id="version"></span>
+  </div>
+  <div class="health" id="health" aria-live="polite"></div>
+  <button type="button" class="ghost" id="logout">Forget token</button>
+</header>
+
+<section id="login" class="login" hidden>
+  <form id="login-form" class="card narrow">
+    <h1>Sign in</h1>
+    <p class="muted">Paste the operator token printed when the server started, or the value of <code>OMEGA_UI_TOKEN</code>.</p>
+    <label for="token-input">Operator token</label>
+    <input id="token-input" type="password" autocomplete="off" spellcheck="false" required>
+    <button type="submit">Continue</button>
+    <p class="error" id="login-error" role="alert"></p>
+  </form>
+</section>
+
+<main id="app" hidden>
+  <nav class="tabs" role="tablist" id="tabs">
+    <button type="button" role="tab" data-tab="keys" aria-selected="true">Keys</button>
+    <button type="button" role="tab" data-tab="projects">Projects</button>
+    <button type="button" role="tab" data-tab="runs">Runs</button>
+    <button type="button" role="tab" data-tab="clearances">Clearances</button>
+    <button type="button" role="tab" data-tab="approvals">Approvals</button>
+    <button type="button" role="tab" data-tab="ship">Ship</button>
+    <button type="button" role="tab" data-tab="cost">Cost</button>
+  </nav>
+
+  <p class="flash" id="flash" role="status" hidden></p>
+
+  <section class="panel" data-panel="keys">
+    <div class="panel-head">
+      <h2>Provider keys</h2>
+      <p class="muted">Keys are encrypted at rest and never sent back to the browser. Only the prefix and last four characters are shown.</p>
+    </div>
+    <table class="grid">
+      <thead><tr><th>Provider</th><th>Key</th><th>Status</th><th>Added</th><th>Last used</th><th></th></tr></thead>
+      <tbody id="keys-body"></tbody>
+    </table>
+    <form id="key-form" class="card inline-form">
+      <h3>Add or replace a key</h3>
+      <div class="row">
+        <label>Provider
+          <select id="key-provider">
+            <option value="anthropic">Anthropic</option>
+            <option value="openai">OpenAI</option>
+            <option value="google">Google</option>
+          </select>
+        </label>
+        <label class="grow">Key
+          <input id="key-value" type="password" autocomplete="off" spellcheck="false" maxlength="512" required>
+        </label>
+        <button type="submit">Save key</button>
+      </div>
+    </form>
+  </section>
+
+  <section class="panel" data-panel="projects" hidden>
+    <div class="panel-head">
+      <h2>Projects</h2>
+      <p class="muted">A project is a workspace the harness governs. Adding one installs the hook adapters into it.</p>
+    </div>
+    <div class="split">
+      <div>
+        <ul class="list" id="projects-list"></ul>
+        <form id="project-form" class="card">
+          <h3>Add a project</h3>
+          <label>Name <input id="project-name" required maxlength="200"></label>
+          <label>Absolute path <input id="project-path" required spellcheck="false" placeholder="/Users/me/code/my-saas"></label>
+          <button type="submit">Add project</button>
+        </form>
+      </div>
+      <div class="card" id="project-detail"><p class="muted">Select a project.</p></div>
+    </div>
+  </section>
+
+  <section class="panel" data-panel="runs" hidden>
+    <div class="panel-head">
+      <h2>Runs</h2>
+      <p class="muted">Each run is one headless agent session. Its trace streams live and replays after a reconnect.</p>
+    </div>
+    <div class="split">
+      <div>
+        <form id="run-form" class="card">
+          <h3>Start a run</h3>
+          <label>Project <select id="run-project" required></select></label>
+          <div class="row">
+            <label>Role
+              <select id="run-role">
+                <option value="implementer">implementer</option>
+                <option value="research">research</option>
+                <option value="architect">architect</option>
+                <option value="utility">utility</option>
+              </select>
+            </label>
+            <label>Provider
+              <select id="run-provider">
+                <option value="">auto (fallback order)</option>
+                <option value="anthropic">anthropic</option>
+                <option value="openai">openai</option>
+              </select>
+            </label>
+            <label>Budget USD <input id="run-budget" type="number" min="0.01" step="0.01" placeholder="role default"></label>
+          </div>
+          <label>Prompt <textarea id="run-prompt" rows="5" required maxlength="100000"></textarea></label>
+          <button type="submit">Start run</button>
+        </form>
+        <ul class="list" id="runs-list"></ul>
+      </div>
+      <div class="card trace-card">
+        <div class="trace-head">
+          <div>
+            <h3 id="trace-title">Trace</h3>
+            <p class="muted small" id="trace-meta"></p>
+          </div>
+          <div class="trace-actions">
+            <span class="conn" id="trace-conn">idle</span>
+            <button type="button" class="danger" id="run-cancel" disabled>Cancel run</button>
+          </div>
+        </div>
+        <ol class="trace" id="trace"></ol>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel" data-panel="clearances" hidden>
+    <div class="panel-head">
+      <h2>Clearances</h2>
+      <p class="muted">A clearance only counts when it is verified and every cleared file still has the hash it was cleared at.</p>
+    </div>
+    <label class="picker">Project <select id="clear-project"></select></label>
+    <div class="cards3" id="clear-cards"></div>
+    <div class="card">
+      <h3>Last stop</h3>
+      <table class="grid"><thead><tr><th>Gate</th><th>Status</th><th>Required</th><th>Detail</th></tr></thead><tbody id="gate-body"></tbody></table>
+    </div>
+  </section>
+
+  <section class="panel" data-panel="approvals" hidden>
+    <div class="panel-head">
+      <h2>Approvals</h2>
+      <p class="muted">Your typed words are signed by the server and written to the run's human-turn log. The agent cannot write there.</p>
+    </div>
+    <label class="picker">Run <select id="appr-run"></select></label>
+    <div id="appr-list"></div>
+    <form id="appr-form" class="card">
+      <h3>Approve</h3>
+      <label>Contract <select id="appr-slug"></select></label>
+      <label>Your answer, in your own words <textarea id="appr-text" rows="3" maxlength="4000" required placeholder="yes, approve the signup contract"></textarea></label>
+      <button type="submit">Approve</button>
+      <p class="result" id="appr-result" role="status"></p>
+    </form>
+    <form id="override-form" class="card warn">
+      <h3>Release the stop gate (override)</h3>
+      <p class="muted">Ends the current block without verification. It is recorded as NOT verified.</p>
+      <label>Reason <input id="override-reason" required maxlength="4000"></label>
+      <button type="submit" class="danger">Override</button>
+      <p class="result" id="override-result" role="status"></p>
+    </form>
+  </section>
+
+  <section class="panel" data-panel="ship" hidden>
+    <div class="panel-head">
+      <h2>Ship</h2>
+      <p class="muted">Shipping opens a draft pull request. It needs fresh, verified clearances. Run the dry run first.</p>
+    </div>
+    <form id="ship-form" class="card">
+      <div class="row">
+        <label>Project <select id="ship-project" required></select></label>
+        <label>Base branch <input id="ship-base" value="main" maxlength="100"></label>
+        <label class="grow">PR title <input id="ship-title" maxlength="200" placeholder="from the contract"></label>
+      </div>
+      <div class="row">
+        <button type="submit" id="ship-dry">Dry run</button>
+        <button type="button" class="danger" id="ship-go" disabled>Ship</button>
+      </div>
+    </form>
+    <pre class="output" id="ship-output"></pre>
+  </section>
+
+  <section class="panel" data-panel="cost" hidden>
+    <div class="panel-head">
+      <h2>Cost</h2>
+      <p class="muted">Spend comes from the cost ledger. Runs are refused before they start when the estimate would cross a cap.</p>
+    </div>
+    <form id="cost-form" class="row">
+      <label>Month <input id="cost-month" placeholder="YYYY-MM" pattern="\d{4}-\d{2}" maxlength="7"></label>
+      <label>Run <select id="cost-run"><option value="">all runs</option></select></label>
+      <button type="submit">Refresh</button>
+    </form>
+    <div class="cards3" id="cost-cards"></div>
+    <ul class="list plain" id="cost-notes"></ul>
+  </section>
+</main>
+<script src="/static/app.js"></script>
+</body>
+</html>

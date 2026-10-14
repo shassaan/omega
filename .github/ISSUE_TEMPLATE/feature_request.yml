@@ -1,0 +1,23 @@
+name: Feature request
+description: A new guard, gate, runtime adapter or improvement
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What can an agent currently do (or fail to prove) that it shouldn't?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposal
+      description: The behaviour you want. Given/When/Then scenarios are welcome.
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options: [Guards (PreToolUse), Stop gates, Contracts / sign-off, TDD gate, Cost caps, Auto-ship / git, New agent runtime, Web dashboard (preview), Docs]

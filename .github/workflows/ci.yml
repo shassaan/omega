@@ -1,0 +1,86 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  hooks:
+    name: hooks · py${{ matrix.python }} · ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        python: ["3.9", "3.10", "3.11", "3.12", "3.13"]
+        include:
+          - os: macos-latest
+            python: "3.13"
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python }}
+          cache: pip
+          cache-dependency-path: requirements-dev.txt
+      - name: Install test dependencies
+        run: python -m pip install -r requirements-dev.txt pyyaml
+      - name: Hook-side tests (stdlib code, Python ${{ matrix.python }})
+        run: python -m pytest -q -p no:cacheprovider tests --ignore=tests/ui
+
+  ui:
+    name: web UI · py3.12
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: ui/requirements.txt
+      - name: Install UI dependencies
+        run: python -m pip install -r ui/requirements.txt pytest
+      - name: UI tests
+        run: python -m pytest -q -p no:cacheprovider tests/ui
+
+  checks:
+    name: launcher, --help smoke, adapter parity
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.9"
+      - name: check-all (pytest runs in the jobs above)
+        env:
+          OMEGA_CHECK_SKIP_PYTEST: "1"
+        run: bash scripts/check-all.sh
+
+  lint:
+    name: lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: ruff (syntax errors and undefined names)
+        run: |
+          python -m pip install ruff
+          ruff check --select E9,F63,F7,F82 --output-format github .
+      - name: shellcheck
+        # SC3040: launch.sh probes for pipefail before using it; SC1007: the `CDPATH= cd` idiom.
+        run: shellcheck -e SC3040,SC1007 bin/*.sh scripts/*.sh

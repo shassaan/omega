@@ -1,0 +1,12 @@
+title = "omega"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "test fixtures and redaction tests hold synthetic secrets"
+paths = [
+  '''^tests/fixtures/''',
+  '''^tests/lib/test_redaction\.py$''',
+  '''^docs/research/code/''',
+]

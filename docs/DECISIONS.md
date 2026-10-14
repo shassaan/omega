@@ -1,0 +1,46 @@
+# Decisions and deviations
+
+One line per decision. Append; never rewrite another package's line.
+
+- CORE: production modules have no docstrings or comments (task rule); D14's per-file module docstring is not used.
+- CORE: `ledger.paths/existing` are absolute; `ledger.source_paths` is workspace-relative (it is matched against contract `code:` lists) — ARCHITECTURE §31.2.
+- CORE: glob patterns without `/` match the basename at any depth; `**/` matches zero or more directories — ARCHITECTURE §31.3.
+- CORE: the state root, the session transcript, `OMEGA_HUMAN_LOG`, `~/.claude/**`, `~/.codex/**` and `~/.gemini/**` are protected paths (an agent that can write its transcript can forge consent; one that edits user settings can disable hooks) — §31.4.
+- CORE: temp roots count as scratch only outside the workspace/harness root, so a workspace under `/var/folders` stays governed — §31.5.
+- CORE: `verify_human_answer` and `REFUSAL` live in `hooks/lib/transcript.py` so GUARDS (`contract_gate.record`) and UI share one implementation.
+- CORE: `jobstore.classify` and `is_environment_failure` take optional `cfg`/`cwd`; `No module named X` is matched with or without quotes (python -m prints it unquoted), so a workspace without pytest is `skipped_env`, never red.
+- CORE: `run_job.py` appends red/green before publishing the result file (a finished job always has its observation on disk).
+- CORE: a still-running newest job is reported `pending` by `settle` and left running (not cancelled); only superseded older jobs are cancelled.
+- CORE: `shell.walk` treats a heredoc as shell input when any word of its opening line is a shell or `eval`/`source` (conservative); quote-aware heredoc detection closes the `echo "<<EOF"` line-hiding bypass in the reference regex.
+- CORE: `shell.unwrap` also peels `uv|poetry|pipenv|pdm|hatch|rye run` and `env -S/--split-string`.
+- CORE: `review.schema.json` override items gained an optional `ts_ns` (override records in §12.5 carry one; the schema rejected them).
+- CORE: `launch.sh` is POSIX sh with `set -eu` (+ `pipefail` when supported), resolves the root with `pwd -P` and uses no external command before an interpreter is found.
+- CORE: `costledger.estimate_usd` raises `UnknownModel` for an unpriced model; ledger rows with an unknown model always mark the check UNVERIFIED (exit 3 path) even when `usd` was supplied.
+- CORE: per-call cap is compared against the largest single row in the session/run scope (or the month when neither is given).
+- GUARDS: SubagentStop and PreCompact are deliberately not registered in v1 (§26).
+- GUARDS: `GateResult` (in `hooks/tdd_gate.py`, reused by `contract_gate`) adds `data: dict`; review data carries approvals/overrides/secrets_scan/pii_scan/channel/verified/pending_request, check data carries the contract.json body.
+- GUARDS: a Bash command containing `*** Begin Patch` is judged by `prod_guard` and `bash_write_guard` as well as the edit checks (§4.5 routed it only to the edit checks, which let `echo '*** Begin Patch'; git push` through).
+- GUARDS: `prod_guard.case_arms()` judges each `case … in x) …;;` arm recursively (CORE `shell.walk` treats arm patterns as command words).
+- GUARDS: extra fail-closed rule ids (`dynamic.*`, `git.config_injection`, `git.output_file`, `git.unknown_subcommand`, `gh.unknown`, `docker.unknown/remote`, `env.dump`, `env.secret_echo`, `pipe.download_write`, …); `git checkout/switch` with arguments, `git reset` to another commit and `manage.py migrate <app> <target>` are blocked; unknown gh/terraform/kubectl/docker subcommands fail closed.
+- GUARDS: write-guard also refuses `curl -o/-O`, `wget`, `tar x/c`, `unzip`, `sort -o`, `find -delete/-fprint`, `sed/perl -i`; `patch` with no operand is UNPROVEN; writes into `~/.ssh`, shell rc files and `/etc` are refused.
+- GUARDS: `tdd_gate` allows a source edit when ANY existing mapped test candidate has a red for its current sha; in `red-or-green` mode a green for the current sha passes without a red; `tdd.mode: off` is accepted.
+- GUARDS: `contract_gate.check` is NOT_APPLICABLE iff the change is trivial and no contract was touched; `review` consumes an override (one Stop) or an open request (one Stop) and then returns PASS with `data.verified=false`.
+- GUARDS: session_start detects the stack from `cfg.ship_readiness.tiers` globs over a bounded walk (no import of ship_readiness); the "no human turn found yet" warning shows only on resume/compact/clear.
+- GATES: the orchestrator re-checks CORE contract coverage and secret/PII scans after the GUARDS gates and forces FAIL on either; contract.json is built from CORE contracts.
+- GATES: a gate that PASSes with `data.verified == false` allows Stop but writes that clearance `verified:false`; `last_stop.verified` is true only when all three are verified.
+- GATES: scope paths outside the workspace are left out of clearance `files` (schema needs relative keys) and reported as a note; the "nothing ran" proof row is required only when the scope holds code.
+- GATES: ship gate status at Stop is FAIL if overall FAIL else the worst tier; UNVERIFIED blocks only with `stop.gates.ship.unverified_blocks`; network-shaped failures of pip-audit/npm audit/terraform init/dbt parse are UNVERIFIED, not FAIL.
+- GATES: tokentoll `check` exit precedence is corrupt(2) > breach(1) > unknown(3); `record` without `--session` falls back to `OMEGA_SESSION_ID`.
+- GATES: buildtime canary demotes when the Wilson lower bound exceeds 0.01, or when n ≥ ceil(z²(1−u)/u) ≈ 381 and the upper bound exceeds 0.01 (the literal upper-bound reading would demote every fresh promotion while n is small).
+- GATES: auto_ship parses owner/repo from the last two path components of `origin` (local bare remotes work); `OMEGA_GITHUB_API` overrides the REST base URL; secrets/PII are scanned on lines added vs HEAD when planning and again on the staged diff under `--yes`.
+- GATES: create_gauntlet JSON-quotes every YAML key and scalar (`"on"` avoids YAML 1.1 booleans), always emits all nine jobs (echo no-op when a stack is absent), and defaults `hashicorp/setup-terraform` to v3.
+- UI: the §23.5 runner API lives in `ui/server.py`; `ui/runner.py` re-exports it. `verify_hooks_fire` runs lazily on the first run per runtime (it needs the provider key) and is cached; `OMEGA_ALLOW_UNHOOKED=1` skips it.
+- UI: `Hub.pub` is the single writer of `events.jsonl`; a usage event writes one `cli_result` ledger row and a run that passes a cap mid-flight is stopped with status `budget_exceeded`.
+- UI: preflight refuses with 402 when the estimate exceeds the per-call cap or requested budget, estimate + run total exceeds the per-run cap, estimate + month exceeds the monthly cap, a cap is already exceeded or the ledger is corrupt; prompts over 100000 characters are a 400.
+- UI: the server verifies the HMAC of every `human_turns.jsonl` row before `record`/override/ship and refuses entirely if any row fails; the HMAC key is the primary Fernet key; WebSocket Origin is checked against an explicit allow-list (never the Host header).
+- UI: cross-provider fallback uses default models (anthropic claude-sonnet-5-5, openai gpt-5.6-sol, google gemini-3.1-pro-preview), overridable with `ui.default_models`.
+- VERIFIER: added `scripts/install_workspace.py` (§6), `bin/git-askpass.sh` (§21), `.codex/config.toml` (§26), `ui/__init__.py`, `ui/runner.py`, which their owning packages could not create; fixed the invalid `"\;"` escape in `hooks/lib/shell.py`.
+- VERIFIER: `install_workspace.py` treats a hook group as the harness's when its command names `bin/launch.sh` and a HOOK_TABLE script; it replaces only those groups, unions `permissions.deny`, and refuses (exit 2, file untouched) when an existing settings/hooks file is not a JSON object.
+- VERIFIER: V7b and V15 (real `claude` session / real key) were not run; `transcript.accept_unlabelled_user_turns` stays false and `hooks_verified.claude` stays false until a human runs them.
+- 2026-10-13 (human request): "human owns git" is replaced by signed git. The agent may commit, push, tag, merge, rebase and run `auto_ship.py --yes`; `prod_guard` requires `commit.gpgsign=true` with the trusted email and signing key before commit-making commands and verifies every outgoing commit's signature, key and author/committer email before `git push` (`hooks/lib/git_signing.py`, ARCHITECTURE §21a). `git.identity` in `.omega/config.json` pins the identity per workspace. `omega.auto_ship_yes` is removed; `gh pr *` is allowed. `~/.gitconfig`, `~/.config/git`, `~/.ssh`, `~/.gnupg` are protected from the edit tools. Kept: config writes, exec injection, credential/daemon/send-email, filter-branch/filter-repo, `submodule foreach`, `bisect run`.
+- REBRAND (2026-10-14): renamed to Omega. User-facing identifiers changed (`OMEGA_*` env vars, `.omega/`, `omega.config.json`, `[omega]`, `omega/` branches and schemas, `omega.*` deny codes, `--omega-repo`); internal Python names (`harness_root`, `harness_command`) and the generic word "harness" are unchanged. `docs/VERIFICATION.md` keeps its pre-rename output verbatim as evidence.

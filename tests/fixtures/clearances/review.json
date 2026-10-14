@@ -1,0 +1,56 @@
+{
+ "schema": "omega/review/1",
+ "omega_version": "0.1.0",
+ "ts": "2026-10-13T10:00:00Z",
+ "ts_ns": 1791885600000000000,
+ "session_id": "sess-claude-0001",
+ "provider": "claude",
+ "workspace": "/abs/ws",
+ "run_id": null,
+ "verified": true,
+ "released": false,
+ "overridden": false,
+ "attempt": 1,
+ "files": {
+  "src/auth/signup.py": "4dd9974620164d1456752305d638bc405ea80627b8a4667c7a60d1c28ae26feb",
+  "tests/test_signup.py": "c23cf6d7ab136666e1448427d12531b188ca007b6311ad38577c7a8705aa78d3",
+  "docs/contracts/user-signup.md": "d936658558c84575fff46a3b16d5fd7503cca5a146492d06a3848db45c5eee82",
+  "src/old.py": "<deleted>"
+ },
+ "files_digest": "c30f060a5b362efbb5dc8aba3afe313449e5bcc6278e4fc4878f07a5fe373ae8",
+ "channel": "transcript",
+ "approvals": [
+  {
+   "slug": "user-signup",
+   "fingerprint": "44863b03e9909b7100e05b02526909a346fd7455183f6619e0fe6198c89981e0",
+   "proposal_id": "cp-1a2b3c4d",
+   "quote": "yes, approve the signup contract",
+   "turn_uuid": "g-yes",
+   "turn_ts": "2026-10-13T09:10:00Z",
+   "turn_source": "typed",
+   "channel": "transcript",
+   "recorded_ts": "2026-10-13T09:10:30Z",
+   "recorded_by": "contract_gate.record",
+   "superseded": false
+  }
+ ],
+ "overrides": [
+  {
+   "gate": "contract",
+   "token": "hs-3f9a2c",
+   "reason": "human waived the journey seam",
+   "turn_uuid": "g-yes",
+   "ts": "2026-10-13T09:11:00Z",
+   "ts_ns": 1791882660000000000,
+   "consumed": true
+  }
+ ],
+ "secrets_scan": {
+  "status": "PASS",
+  "hits": []
+ },
+ "pii_scan": {
+  "status": "PASS",
+  "hits": []
+ }
+}

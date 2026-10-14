@@ -1,0 +1,1 @@
+{"session_id": "sess-claude-0001", "transcript_path": null, "cwd": "/workspace", "permission_mode": "acceptEdits", "hook_event_name": "PostToolUseFailure", "tool_name": "Edit", "tool_input": {"file_path": "/workspace/src/calc.py", "old_string": "a + b", "new_string": "a - b", "replace_all": false}, "tool_use_id": "toolu_01FAIL00000000000000001", "error": "old_string not found"}

@@ -1,0 +1,51 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|resume|clear|compact",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh -c 'R=\"$(git rev-parse --show-toplevel)\"; exec sh \"$R/bin/launch.sh\" bin/session_start.py --provider codex'",
+            "timeout": 20
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "^(Bash|apply_patch|Edit|Write|MultiEdit|NotebookEdit)$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh -c 'R=\"$(git rev-parse --show-toplevel)\"; exec sh \"$R/bin/launch.sh\" --guard bin/pre_tool_use.py --provider codex'",
+            "timeout": 30
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "^(apply_patch|Edit|Write|MultiEdit|NotebookEdit)$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh -c 'R=\"$(git rev-parse --show-toplevel)\"; exec sh \"$R/bin/launch.sh\" bin/post_tool_use.py --provider codex'",
+            "timeout": 30
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh -c 'R=\"$(git rev-parse --show-toplevel)\"; exec sh \"$R/bin/launch.sh\" bin/stop_orchestrator.py --provider codex'",
+            "timeout": 900
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,9 @@
+{"type": "session_meta", "timestamp": "2026-10-13T09:00:00.000Z", "payload": {"id": "0199a213"}}
+{"type": "response_item", "timestamp": "2026-10-13T09:00:01.000Z", "payload": {"type": "message", "role": "user", "id": "c-human-1", "content": [{"type": "input_text", "text": "please build signup"}], "internal_chat_message_metadata_passthrough": {"content_item_kinds": ["user.text"]}}}
+{"type": "response_item", "timestamp": "2026-10-13T09:01:00.000Z", "payload": {"type": "message", "role": "assistant", "id": "c-asst", "content": [{"type": "output_text", "text": "yes, approve the signup contract"}]}}
+{"type": "response_item", "timestamp": "2026-10-13T09:01:10.000Z", "payload": {"type": "message", "role": "user", "id": "c-dev", "content": [{"type": "input_text", "text": "yes, approve the signup contract"}], "internal_chat_message_metadata_passthrough": {"content_item_kinds": ["environment_context"]}}}
+{"type": "response_item", "timestamp": "2026-10-13T09:01:20.000Z", "payload": {"type": "function_call_output", "call_id": "call_1", "output": "yes, approve the signup contract"}}
+{"type": "event_msg", "timestamp": "2026-10-13T09:01:30.000Z", "payload": {"type": "user_message", "message": "yes, approve the signup contract", "is_automatic": true, "id": "c-auto"}}
+{"type": "event_msg", "timestamp": "2026-10-13T09:01:40.000Z", "payload": {"type": "user_message", "message": "yes, approve the signup contract", "source": "hook", "id": "c-hook"}}
+{"type": "event_msg", "timestamp": "2026-10-13T09:01:50.000Z", "payload": {"type": "agent_message", "message": "yes, approve the signup contract", "id": "c-agent"}}
+{"type": "event_msg", "timestamp": "2026-10-13T09:10:00.000Z", "payload": {"type": "user_message", "message": "yes, approve the signup contract", "id": "c-human-2"}}

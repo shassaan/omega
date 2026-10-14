@@ -1,0 +1,119 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/shassaan/omega/schemas/review.schema.json",
+  "title": "Harness review clearance",
+  "description": "Written by bin/stop_orchestrator.py to <workspace>/.omega/clearances/review.json. Human sign-off evidence (verbatim quote from an allow-listed human turn, bound to the contract fingerprint and proposal id), human overrides, and the secret/PII scans over touched files. Bound to the sha256 of every touched file.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "omega_version", "ts", "ts_ns", "session_id", "provider", "workspace", "run_id", "verified", "released", "overridden", "attempt", "files", "files_digest", "channel", "approvals", "overrides", "secrets_scan", "pii_scan"],
+  "properties": {
+    "schema": {"const": "omega/review/1"},
+    "omega_version": {"type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$"},
+    "ts": {"$ref": "#/$defs/isoTs"},
+    "ts_ns": {"$ref": "#/$defs/tsNs"},
+    "session_id": {"type": "string", "minLength": 1},
+    "provider": {"enum": ["claude", "codex"]},
+    "workspace": {"type": "string", "minLength": 1},
+    "run_id": {"type": ["string", "null"]},
+    "verified": {"type": "boolean"},
+    "released": {"type": "boolean"},
+    "overridden": {"type": "boolean"},
+    "attempt": {"type": "integer", "minimum": 0},
+    "files": {"$ref": "#/$defs/files"},
+    "files_digest": {"$ref": "#/$defs/sha256"},
+    "channel": {
+      "enum": ["transcript", "ui"],
+      "description": "Where human turns were read from: the runtime transcript (terminal mode) or the UI server's append-only human-turn log (web mode)."
+    },
+    "approvals": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/approval"}
+    },
+    "overrides": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/override"}
+    },
+    "secrets_scan": {"$ref": "#/$defs/scan"},
+    "pii_scan": {"$ref": "#/$defs/scan"}
+  },
+  "$defs": {
+    "isoTs": {"type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$"},
+    "tsNs": {"type": "integer", "minimum": 0},
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "fileHash": {"type": "string", "pattern": "^([0-9a-f]{64}|<deleted>|<dir>)$"},
+    "relPath": {"type": "string", "minLength": 1, "pattern": "^[^/].*$"},
+    "slug": {"type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"},
+    "status": {"enum": ["PASS", "FAIL", "UNVERIFIED", "NOT_APPLICABLE"]},
+    "files": {
+      "type": "object",
+      "propertyNames": {"$ref": "#/$defs/relPath"},
+      "additionalProperties": {"$ref": "#/$defs/fileHash"}
+    },
+    "approval": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["slug", "fingerprint", "proposal_id", "quote", "turn_uuid", "turn_ts", "turn_source", "channel", "recorded_ts", "recorded_by", "superseded"],
+      "properties": {
+        "slug": {"$ref": "#/$defs/slug"},
+        "fingerprint": {"type": "string", "pattern": "^([0-9a-f]{64}|<deleted>)$"},
+        "proposal_id": {"type": "string", "pattern": "^cp-[0-9a-f]{8}$"},
+        "quote": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 400,
+          "description": "The human's own words, verbatim, as found in a human turn after the proposal."
+        },
+        "turn_uuid": {"type": "string", "minLength": 1},
+        "turn_ts": {"type": ["string", "null"]},
+        "turn_source": {
+          "type": "string",
+          "description": "Claude promptSource (typed|suggestion_accepted|queued|sdk), Codex source, or ui."
+        },
+        "channel": {"enum": ["transcript", "ui"]},
+        "recorded_ts": {"$ref": "#/$defs/isoTs"},
+        "recorded_by": {"enum": ["contract_gate.record", "ui.server"]},
+        "superseded": {
+          "type": "boolean",
+          "description": "True when a newer proposal id exists than the one this approval answered."
+        }
+      }
+    },
+    "override": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["gate", "token", "reason", "turn_uuid", "ts", "consumed"],
+      "properties": {
+        "gate": {"enum": ["contract", "stop"]},
+        "token": {"type": "string", "pattern": "^hs-[0-9a-f]{6}$"},
+        "reason": {"type": "string", "minLength": 1},
+        "turn_uuid": {"type": "string", "minLength": 1},
+        "ts": {"$ref": "#/$defs/isoTs"},
+        "ts_ns": {"$ref": "#/$defs/tsNs"},
+        "consumed": {"type": "boolean"}
+      }
+    },
+    "hit": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["rule", "path", "line"],
+      "properties": {
+        "rule": {"type": "string", "minLength": 1},
+        "path": {"$ref": "#/$defs/relPath"},
+        "line": {"type": "integer", "minimum": 1}
+      }
+    },
+    "scan": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "hits"],
+      "properties": {
+        "status": {"$ref": "#/$defs/status"},
+        "hits": {
+          "type": "array",
+          "description": "Rule name and location only. Never the matched value.",
+          "items": {"$ref": "#/$defs/hit"}
+        }
+      }
+    }
+  }
+}

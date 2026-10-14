@@ -1,0 +1,185 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/shassaan/omega/schemas/proof.schema.json",
+  "title": "Harness proof clearance",
+  "description": "Written by bin/stop_orchestrator.py to <workspace>/.omega/clearances/proof.json. Machine proof: test suites, TDD red/green pairs, cost caps, ship-readiness tiers. Bound to the sha256 of every touched file; any later edit makes it stale.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "omega_version", "ts", "ts_ns", "session_id", "provider", "workspace", "run_id", "verified", "released", "overridden", "attempt", "files", "files_digest", "results", "tdd", "cost", "ship", "blocking", "unparsed_mutations"],
+  "properties": {
+    "schema": {"const": "omega/proof/1"},
+    "omega_version": {"type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$"},
+    "ts": {"$ref": "#/$defs/isoTs"},
+    "ts_ns": {"$ref": "#/$defs/tsNs"},
+    "session_id": {"type": "string", "minLength": 1},
+    "provider": {"enum": ["claude", "codex"]},
+    "workspace": {"type": "string", "minLength": 1},
+    "run_id": {"type": ["string", "null"]},
+    "verified": {"type": "boolean"},
+    "released": {"type": "boolean"},
+    "overridden": {"type": "boolean"},
+    "attempt": {"type": "integer", "minimum": 0},
+    "files": {"$ref": "#/$defs/files"},
+    "files_digest": {"$ref": "#/$defs/sha256"},
+    "results": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/checkResult"}
+    },
+    "tdd": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/tddPair"}
+    },
+    "cost": {"$ref": "#/$defs/cost"},
+    "ship": {"$ref": "#/$defs/ship"},
+    "blocking": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/blocker"}
+    },
+    "unparsed_mutations": {"type": "array", "items": {"type": "string"}}
+  },
+  "$defs": {
+    "isoTs": {"type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$"},
+    "tsNs": {"type": "integer", "minimum": 0},
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "fileHash": {"type": "string", "pattern": "^([0-9a-f]{64}|<deleted>|<dir>)$"},
+    "relPath": {"type": "string", "minLength": 1, "pattern": "^[^/].*$"},
+    "status": {"enum": ["PASS", "FAIL", "UNVERIFIED", "NOT_APPLICABLE"]},
+    "gate": {"enum": ["proof", "tdd", "contract", "review", "cost", "ship", "harness"]},
+    "files": {
+      "type": "object",
+      "description": "Workspace-relative posix path -> sha256 of content at snapshot time; <deleted> for a path removed this session.",
+      "propertyNames": {"$ref": "#/$defs/relPath"},
+      "additionalProperties": {"$ref": "#/$defs/fileHash"}
+    },
+    "checkResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["gate", "check", "status", "required", "detail", "rc", "duration_ms", "argv", "cwd", "output_tail"],
+      "properties": {
+        "gate": {"$ref": "#/$defs/gate"},
+        "check": {"type": "string", "minLength": 1},
+        "status": {"$ref": "#/$defs/status"},
+        "required": {"type": "boolean"},
+        "detail": {"type": "string"},
+        "rc": {"type": ["integer", "null"]},
+        "duration_ms": {"type": "integer", "minimum": 0},
+        "argv": {"type": "array", "items": {"type": "string"}},
+        "cwd": {"type": "string"},
+        "output_tail": {"type": "string", "maxLength": 4096}
+      }
+    },
+    "jobRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ts", "ts_ns", "job_id", "rc"],
+      "properties": {
+        "ts": {"$ref": "#/$defs/isoTs"},
+        "ts_ns": {"$ref": "#/$defs/tsNs"},
+        "job_id": {"type": "string", "minLength": 1},
+        "rc": {"type": ["integer", "null"]}
+      }
+    },
+    "tddPair": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source", "test", "test_sha256", "red", "green", "status", "detail"],
+      "properties": {
+        "source": {"$ref": "#/$defs/relPath"},
+        "test": {"type": ["string", "null"]},
+        "test_sha256": {"oneOf": [{"$ref": "#/$defs/fileHash"}, {"type": "null"}]},
+        "red": {"oneOf": [{"$ref": "#/$defs/jobRef"}, {"type": "null"}]},
+        "green": {"oneOf": [{"$ref": "#/$defs/jobRef"}, {"type": "null"}]},
+        "status": {"$ref": "#/$defs/status"},
+        "detail": {"type": "string"}
+      }
+    },
+    "cost": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "session_usd", "run_usd", "month_usd", "max_call_usd", "caps", "breaches", "warnings", "unknown_models"],
+      "properties": {
+        "status": {"$ref": "#/$defs/status"},
+        "session_usd": {"type": ["number", "null"], "minimum": 0},
+        "run_usd": {"type": ["number", "null"], "minimum": 0},
+        "month_usd": {"type": ["number", "null"], "minimum": 0},
+        "max_call_usd": {"type": ["number", "null"], "minimum": 0},
+        "caps": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["per_call_usd", "per_session_usd", "per_run_usd", "monthly_usd"],
+          "properties": {
+            "per_call_usd": {"type": "number", "minimum": 0},
+            "per_session_usd": {"type": "number", "minimum": 0},
+            "per_run_usd": {"type": "number", "minimum": 0},
+            "monthly_usd": {"type": "number", "minimum": 0}
+          }
+        },
+        "breaches": {"type": "array", "items": {"type": "string"}},
+        "warnings": {"type": "array", "items": {"type": "string"}},
+        "unknown_models": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "shipCheck": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "status", "argv", "rc", "duration_ms", "detail", "hint", "required"],
+      "properties": {
+        "id": {"type": "string", "minLength": 1},
+        "status": {"$ref": "#/$defs/status"},
+        "argv": {"type": "array", "items": {"type": "string"}},
+        "rc": {"type": ["integer", "null"]},
+        "duration_ms": {"type": "integer", "minimum": 0},
+        "detail": {"type": "string"},
+        "hint": {"type": "string"},
+        "required": {"type": "boolean"}
+      }
+    },
+    "shipTier": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "applicable", "detected", "checks"],
+      "properties": {
+        "status": {"$ref": "#/$defs/status"},
+        "applicable": {"type": "boolean"},
+        "detected": {"type": "array", "items": {"type": "string"}},
+        "checks": {"type": "array", "items": {"$ref": "#/$defs/shipCheck"}}
+      }
+    },
+    "ship": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema", "ts", "workspace", "mode", "strict", "status", "tiers"],
+      "properties": {
+        "schema": {"const": "omega/ship/1"},
+        "ts": {"$ref": "#/$defs/isoTs"},
+        "workspace": {"type": "string"},
+        "mode": {"enum": ["fast", "full"]},
+        "strict": {"type": "boolean"},
+        "status": {"$ref": "#/$defs/status"},
+        "tiers": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["infra", "database", "application", "analytics", "observability"],
+          "properties": {
+            "infra": {"$ref": "#/$defs/shipTier"},
+            "database": {"$ref": "#/$defs/shipTier"},
+            "application": {"$ref": "#/$defs/shipTier"},
+            "analytics": {"$ref": "#/$defs/shipTier"},
+            "observability": {"$ref": "#/$defs/shipTier"}
+          }
+        }
+      }
+    },
+    "blocker": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["gate", "check", "status", "detail"],
+      "properties": {
+        "gate": {"$ref": "#/$defs/gate"},
+        "check": {"type": "string"},
+        "status": {"enum": ["FAIL", "UNVERIFIED"]},
+        "detail": {"type": "string"}
+      }
+    }
+  }
+}
