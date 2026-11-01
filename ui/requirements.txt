@@ -1,6 +1,6 @@
 fastapi==0.143.0
 uvicorn[standard]==0.54.0
 cryptography==45.0.7
-websockets==13.1
+websockets==17.3
 httpx==0.28.1
 pytest==8.4.2
